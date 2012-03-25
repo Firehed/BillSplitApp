@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title></title>
+	</head>
+	<body>
+
+		<fieldset id="amounts">
+			<legend>Amounts <button id="amount_add">+</button></legend>
+			<!-- Rows will be added via JS, see addAmount -->
+		</fieldset>
+
+		<fieldset id="totals">
+			<legend>Totals</legend>
+			<label for="order_subtotal">Subtotal</label><br />
+			<input id="order_subtotal" readonly /><br />
+
+			<label for="order_tax">Tax</label><br />
+			<input id="order_tax" /><br />
+
+			<label for="order_tip">Tip</label><br />
+			<input id="order_tip" /><br />
+
+			<label for="order_total">Total</label><br />
+			<input id="order_total" readonly /><br />
+
+		</fieldset>
+
+		<!-- Amount row template -->
+		<script type="text/html" id="template_amount">
+			<div class="amount_row">
+				<button class="remove">-</button>
+				<input placeholder="Name" class="guest_name"/>
+				<input placeholder="$0.00" class="guest_subtotal" />
+				<input class="guest_total" value="$0.00" readonly />
+			</div>
+		
+		</script>
+
+
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js" type="text/javascript"></script>
+		<script type="text/javascript" charset="utf-8">
+			var getAmount = function(str) {
+				str = parseFloat(str.replace(/[^0-9.]+/, ''));
+				return isNaN(str) ? 0 : str;
+			};
+			var toDollars = function(amount) {
+				return '$' + amount.toFixed(2);
+			}
+			var addAmount = function() {
+				var tpl = $("#template_amount").text();
+				$("#amounts").append(tpl);
+			};
+			var removeAmount = function(event) {
+				$(event.currentTarget).parent().remove();
+			};
+			var calculate = function() {
+				var subTotal = 0.0;
+				var tip = getAmount($("#order_tip").val());
+				var tax = getAmount($("#order_tax").val());
+				var total = 0.0;
+				
+				$(".guest_subtotal", ".amount_row").each(function() {
+					subTotal += getAmount($(this).val());
+				});
+				var pct = 1;
+				if (subTotal) {
+					pct += (tax+tip)/subTotal;
+				}
+				$(".amount_row").each(function() {
+					var rowSubTotal = getAmount($(".guest_subtotal", this).val());
+					var rowTotal = rowSubTotal * pct;
+					total += rowTotal;
+					$(".guest_total", this).val(toDollars(rowTotal));
+				});
+				$("#order_subtotal").val(toDollars(subTotal));
+				$("#order_total").val(toDollars(total));
+			};
+			(function($) {
+				addAmount();
+				$("#amount_add").on('click', addAmount);
+				$("#amounts").on('click', 'button.remove', removeAmount);
+				$("#amounts").on('keyup', ".amount_row", calculate);
+				$("#order_tax, #order_tip").on('keyup', calculate);
+			})(jQuery);
+		</script>
+	</body>
+</html>
